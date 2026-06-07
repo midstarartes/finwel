@@ -2,27 +2,28 @@
 
 import { ContaMensal, Status } from '@/lib/types'
 import { formatCurrency, formatDate, computeStatus, getStatusLabel, getStatusColor } from '@/lib/utils'
-import { CheckSquare, Square, RotateCcw, User } from 'lucide-react'
+import { CheckSquare, Square, RotateCcw, User, Pencil, Trash2, RefreshCw } from 'lucide-react'
 
 interface ContaRowProps {
   conta: ContaMensal
   onMarcarPago: (conta: ContaMensal) => void
   onDesfazerPagamento: (contaId: string) => Promise<void>
+  onEditar: (conta: ContaMensal) => void
+  onExcluir: (contaId: string) => Promise<void>
 }
 
-export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento }: ContaRowProps) {
+export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onEditar, onExcluir }: ContaRowProps) {
   const status: Status = computeStatus(conta.data_vencimento, conta.data_pagamento)
 
   return (
-    <tr className="border-b transition-colors hover:bg-white/[0.02]"
+    <tr className="border-b transition-colors hover:bg-white/[0.02] group"
       style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-      {/* Checkbox / Status */}
+      {/* Checkbox */}
       <td className="pl-4 pr-2 py-4">
         <button
           onClick={() => status !== 'pago' ? onMarcarPago(conta) : null}
           className="flex items-center justify-center transition-all"
-          title={status === 'pago' ? 'Pago' : 'Marcar como pago'}
-        >
+          title={status === 'pago' ? 'Pago' : 'Marcar como pago'}>
           {status === 'pago' ? (
             <CheckSquare className="w-6 h-6 text-emerald-400" />
           ) : (
@@ -33,9 +34,14 @@ export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento }: C
 
       {/* Descrição */}
       <td className="px-4 py-4">
-        <p className={`font-medium text-sm ${status === 'pago' ? 'text-slate-500 line-through' : 'text-white'}`}>
-          {conta.descricao}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className={`font-medium text-sm ${status === 'pago' ? 'text-slate-500 line-through' : 'text-white'}`}>
+            {conta.descricao}
+          </p>
+          {conta.conta_recorrente_id && (
+            <RefreshCw className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+          )}
+        </div>
         {conta.numero_parcela && (
           <p className="text-xs text-slate-500 mt-0.5">Parcela {conta.numero_parcela}/{conta.total_parcelas}</p>
         )}
@@ -68,22 +74,33 @@ export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento }: C
         </span>
       </td>
 
-      {/* Pagamento / Desfazer */}
-      <td className="pl-2 pr-4 py-4 text-center hidden lg:table-cell">
-        {status === 'pago' ? (
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs text-slate-500">{conta.data_pagamento ? formatDate(conta.data_pagamento) : ''}</span>
+      {/* Ações */}
+      <td className="pl-2 pr-4 py-4">
+        <div className="flex items-center justify-center gap-1">
+          {status === 'pago' ? (
             <button
               onClick={() => onDesfazerPagamento(conta.id)}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-amber-400 transition-colors"
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-amber-400 transition-colors px-2 py-1 rounded-lg hover:bg-amber-400/10"
               title="Desfazer pagamento">
-              <RotateCcw className="w-3 h-3" />
-              Desfazer
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">{conta.data_pagamento ? formatDate(conta.data_pagamento) : 'Desfazer'}</span>
             </button>
-          </div>
-        ) : (
-          <span className="text-slate-600 text-xs">—</span>
-        )}
+          ) : (
+            <span className="text-slate-700 text-xs hidden lg:inline">—</span>
+          )}
+          <button
+            onClick={() => onEditar(conta)}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-400/10 transition-all opacity-0 group-hover:opacity-100"
+            title="Editar conta">
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onExcluir(conta.id)}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100"
+            title="Excluir conta">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
       </td>
     </tr>
   )

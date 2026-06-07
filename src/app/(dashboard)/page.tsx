@@ -8,6 +8,7 @@ import MesNavigation from '@/components/Dashboard/MesNavigation'
 import ContaRow from '@/components/Dashboard/ContaRow'
 import PagamentoModal from '@/components/Dashboard/PagamentoModal'
 import NovaConta from '@/components/Dashboard/NovaConta'
+import EditarConta from '@/components/Dashboard/EditarConta'
 import { Plus, Download, RefreshCw } from 'lucide-react'
 import Button from '@/components/UI/Button'
 
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [contaSelecionada, setContaSelecionada] = useState<ContaMensal | null>(null)
   const [showNovaConta, setShowNovaConta] = useState(false)
+  const [contaEditando, setContaEditando] = useState<ContaMensal | null>(null)
 
   const fetchContas = useCallback(async () => {
     setLoading(true)
@@ -55,6 +57,12 @@ export default function DashboardPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'aberto', data_pagamento: null }),
     })
+    fetchContas()
+  }
+
+  async function handleExcluir(contaId: string) {
+    if (!confirm('Excluir esta conta do mês?')) return
+    await fetch(`/api/contas-mensais/${contaId}`, { method: 'DELETE' })
     fetchContas()
   }
 
@@ -133,7 +141,7 @@ export default function DashboardPage() {
                   <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Valor</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Vencimento</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="pl-2 pr-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">Pagamento</th>
+                  <th className="pl-2 pr-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,6 +151,8 @@ export default function DashboardPage() {
                     conta={conta}
                     onMarcarPago={c => setContaSelecionada(c)}
                     onDesfazerPagamento={handleDesfazerPagamento}
+                    onEditar={c => setContaEditando(c)}
+                    onExcluir={handleExcluir}
                   />
                 ))}
               </tbody>
@@ -163,6 +173,13 @@ export default function DashboardPage() {
         onClose={() => setShowNovaConta(false)}
         mes={mes}
         ano={ano}
+        onSuccess={fetchContas}
+      />
+
+      <EditarConta
+        conta={contaEditando}
+        open={!!contaEditando}
+        onClose={() => setContaEditando(null)}
         onSuccess={fetchContas}
       />
     </div>
