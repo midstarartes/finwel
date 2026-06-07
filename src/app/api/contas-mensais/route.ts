@@ -70,10 +70,11 @@ async function generateMonthlyBills(supabase: Awaited<ReturnType<typeof createCl
 
   const toInsert = recorrentes
     .filter((r: { id: string }) => !existingIds.has(r.id))
-    .map((r: { id: string; descricao: string; responsavel_id: string | null; valor: number; dia_vencimento: number }) => ({
+    .map((r: { id: string; descricao: string; responsavel_id: string | null; responsaveis_texto?: string; valor: number; dia_vencimento: number }) => ({
       user_id: userId,
       descricao: r.descricao,
       responsavel_id: r.responsavel_id,
+      responsaveis_texto: r.responsaveis_texto || '',
       valor: r.valor,
       data_vencimento: buildVencimentoDate(r.dia_vencimento, mes, ano),
       status: 'aberto',

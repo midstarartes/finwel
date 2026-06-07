@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Modal from '@/components/UI/Modal'
 import Button from '@/components/UI/Button'
+import ResponsaveisSelect from '@/components/UI/ResponsaveisSelect'
 import { Responsavel } from '@/lib/types'
 import { format, getDate } from 'date-fns'
 import { RefreshCw } from 'lucide-react'
@@ -18,7 +19,7 @@ interface NovaContaProps {
 export default function NovaConta({ open, onClose, mes, ano, onSuccess }: NovaContaProps) {
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([])
   const [descricao, setDescricao] = useState('')
-  const [responsavelId, setResponsavelId] = useState('')
+  const [responsaveisSelecionados, setResponsaveisSelecionados] = useState<string[]>([])
   const [valor, setValor] = useState('')
   const [dataVencimento, setDataVencimento] = useState(
     format(new Date(ano, mes - 1, 1), 'yyyy-MM-dd')
@@ -37,7 +38,7 @@ export default function NovaConta({ open, onClose, mes, ano, onSuccess }: NovaCo
   function resetForm() {
     setDescricao('')
     setValor('')
-    setResponsavelId('')
+    setResponsaveisSelecionados([])
     setRecorrente(false)
     setDataVencimento(format(new Date(ano, mes - 1, 1), 'yyyy-MM-dd'))
   }
@@ -48,14 +49,16 @@ export default function NovaConta({ open, onClose, mes, ano, onSuccess }: NovaCo
     const valorNum = parseFloat(valor.replace(',', '.'))
     const diaVencimento = getDate(new Date(dataVencimento))
 
+    const responsaveisTexto = responsaveisSelecionados.join(', ')
+
     if (recorrente) {
-      // Criar recorrente + instância do mês atual
       await fetch('/api/contas-recorrentes/create-with-instance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           descricao,
-          responsavel_id: responsavelId || null,
+          responsavel_id: null,
+          responsaveis_texto: responsaveisTexto,
           valor: valorNum,
           dia_vencimento: diaVencimento,
           mes_atual: mes,
@@ -69,7 +72,8 @@ export default function NovaConta({ open, onClose, mes, ano, onSuccess }: NovaCo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           descricao,
-          responsavel_id: responsavelId || null,
+          responsavel_id: null,
+          responsaveis_texto: responsaveisTexto,
           valor: valorNum,
           data_vencimento: dataVencimento,
           mes_competencia: mes,
@@ -113,12 +117,14 @@ export default function NovaConta({ open, onClose, mes, ano, onSuccess }: NovaCo
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5">Responsável</label>
-          <select value={responsavelId} onChange={e => setResponsavelId(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl text-white outline-none" style={inputStyle}>
-            <option value="">— Selecionar —</option>
-            {responsaveis.map(r => <option key={r.id} value={r.id}>{r.nome}</option>)}
-          </select>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Responsável(is)</label>
+          <div className="px-4 py-3 rounded-xl" style={inputStyle}>
+            <ResponsaveisSelect
+              responsaveis={responsaveis}
+              selected={responsaveisSelecionados}
+              onChange={setResponsaveisSelecionados}
+            />
+          </div>
         </div>
 
         {/* Toggle recorrente */}

@@ -2,7 +2,8 @@
 
 import { ContaMensal, Status } from '@/lib/types'
 import { formatCurrency, formatDate, computeStatus, getStatusLabel, getStatusColor } from '@/lib/utils'
-import { CheckSquare, Square, RotateCcw, User, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { RefreshCw, Users } from 'lucide-react'
+import ContaMenu from './ContaMenu'
 
 interface ContaRowProps {
   conta: ContaMensal
@@ -10,27 +11,16 @@ interface ContaRowProps {
   onDesfazerPagamento: (contaId: string) => Promise<void>
   onEditar: (conta: ContaMensal) => void
   onExcluir: (contaId: string) => Promise<void>
+  onDuplicar: (conta: ContaMensal) => Promise<void>
 }
 
-export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onEditar, onExcluir }: ContaRowProps) {
+export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onEditar, onExcluir, onDuplicar }: ContaRowProps) {
   const status: Status = computeStatus(conta.data_vencimento, conta.data_pagamento)
+  const responsaveisLabel = conta.responsaveis_texto || conta.responsavel?.nome || '—'
 
   return (
-    <tr className="border-b transition-colors hover:bg-white/[0.02] group"
+    <tr className="border-b transition-colors hover:bg-white/[0.02]"
       style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-      {/* Checkbox */}
-      <td className="pl-4 pr-2 py-4">
-        <button
-          onClick={() => status !== 'pago' ? onMarcarPago(conta) : null}
-          className="flex items-center justify-center transition-all"
-          title={status === 'pago' ? 'Pago' : 'Marcar como pago'}>
-          {status === 'pago' ? (
-            <CheckSquare className="w-6 h-6 text-emerald-400" />
-          ) : (
-            <Square className="w-6 h-6 text-slate-500 hover:text-slate-300" />
-          )}
-        </button>
-      </td>
 
       {/* Descrição */}
       <td className="px-4 py-4">
@@ -47,11 +37,11 @@ export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onE
         )}
       </td>
 
-      {/* Responsável */}
+      {/* Responsável(is) */}
       <td className="px-4 py-4 hidden md:table-cell">
         <div className="flex items-center gap-1.5">
-          <User className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-sm text-slate-400">{conta.responsavel?.nome ?? '—'}</span>
+          <Users className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+          <span className="text-sm text-slate-400">{responsaveisLabel}</span>
         </div>
       </td>
 
@@ -74,32 +64,20 @@ export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onE
         </span>
       </td>
 
-      {/* Ações */}
-      <td className="pl-2 pr-4 py-4">
-        <div className="flex items-center justify-center gap-1">
-          {status === 'pago' ? (
-            <button
-              onClick={() => onDesfazerPagamento(conta.id)}
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-amber-400 transition-colors px-2 py-1 rounded-lg hover:bg-amber-400/10"
-              title="Desfazer pagamento">
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">{conta.data_pagamento ? formatDate(conta.data_pagamento) : 'Desfazer'}</span>
-            </button>
-          ) : (
-            <span className="text-slate-700 text-xs hidden lg:inline">—</span>
+      {/* Menu engrenagem */}
+      <td className="pr-4 py-4 text-center">
+        <div className="flex items-center justify-center gap-2">
+          {status === 'pago' && conta.data_pagamento && (
+            <span className="text-xs text-slate-600 hidden lg:inline">{formatDate(conta.data_pagamento)}</span>
           )}
-          <button
-            onClick={() => onEditar(conta)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-400/10 transition-all opacity-0 group-hover:opacity-100"
-            title="Editar conta">
-            <Pencil className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onExcluir(conta.id)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100"
-            title="Excluir conta">
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <ContaMenu
+            conta={conta}
+            onEditar={() => onEditar(conta)}
+            onExcluir={() => onExcluir(conta.id)}
+            onDuplicar={() => onDuplicar(conta)}
+            onMarcarPago={() => onMarcarPago(conta)}
+            onDesfazerPagamento={() => onDesfazerPagamento(conta.id)}
+          />
         </div>
       </td>
     </tr>

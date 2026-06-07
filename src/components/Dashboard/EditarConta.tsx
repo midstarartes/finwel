@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Modal from '@/components/UI/Modal'
 import Button from '@/components/UI/Button'
+import ResponsaveisSelect from '@/components/UI/ResponsaveisSelect'
 import { ContaMensal, Responsavel } from '@/lib/types'
 import { RefreshCw, AlertCircle } from 'lucide-react'
 
@@ -16,7 +17,7 @@ interface EditarContaProps {
 export default function EditarConta({ conta, open, onClose, onSuccess }: EditarContaProps) {
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([])
   const [descricao, setDescricao] = useState('')
-  const [responsavelId, setResponsavelId] = useState('')
+  const [responsaveisSelecionados, setResponsaveisSelecionados] = useState<string[]>([])
   const [valor, setValor] = useState('')
   const [dataVencimento, setDataVencimento] = useState('')
   const [propagarRecorrente, setPropagarRecorrente] = useState(true)
@@ -29,7 +30,10 @@ export default function EditarConta({ conta, open, onClose, onSuccess }: EditarC
   useEffect(() => {
     if (conta) {
       setDescricao(conta.descricao)
-      setResponsavelId(conta.responsavel_id ?? '')
+      const existingNames = conta.responsaveis_texto
+        ? conta.responsaveis_texto.split(', ').filter(Boolean)
+        : conta.responsavel?.nome ? [conta.responsavel.nome] : []
+      setResponsaveisSelecionados(existingNames)
       setValor(String(conta.valor))
       setDataVencimento(conta.data_vencimento)
       setPropagarRecorrente(true)
@@ -47,7 +51,8 @@ export default function EditarConta({ conta, open, onClose, onSuccess }: EditarC
 
     const body = {
       descricao,
-      responsavel_id: responsavelId || null,
+      responsavel_id: null,
+      responsaveis_texto: responsaveisSelecionados.join(', '),
       valor: parseFloat(valor.replace(',', '.')),
       data_vencimento: dataVencimento,
       propagar_recorrente: isRecorrente && propagarRecorrente,
@@ -95,12 +100,14 @@ export default function EditarConta({ conta, open, onClose, onSuccess }: EditarC
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5">Responsável</label>
-          <select value={responsavelId} onChange={e => setResponsavelId(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl text-white outline-none" style={inputStyle}>
-            <option value="">— Selecionar —</option>
-            {responsaveis.map(r => <option key={r.id} value={r.id}>{r.nome}</option>)}
-          </select>
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">Responsável(is)</label>
+          <div className="px-4 py-3 rounded-xl" style={inputStyle}>
+            <ResponsaveisSelect
+              responsaveis={responsaveis}
+              selected={responsaveisSelecionados}
+              onChange={setResponsaveisSelecionados}
+            />
+          </div>
         </div>
 
         {isRecorrente && (

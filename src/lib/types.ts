@@ -15,6 +15,7 @@ export interface ContaRecorrente {
   descricao: string
   responsavel_id: string | null
   responsavel?: Responsavel
+  responsaveis_texto: string
   valor: number
   dia_vencimento: number
   ativo: boolean
@@ -28,6 +29,7 @@ export interface ContaParcelada {
   descricao: string
   responsavel_id: string | null
   responsavel?: Responsavel
+  responsaveis_texto: string
   valor_parcela: number
   total_parcelas: number
   primeira_vencimento: string
@@ -42,6 +44,7 @@ export interface ContaMensal {
   descricao: string
   responsavel_id: string | null
   responsavel?: Responsavel
+  responsaveis_texto: string
   valor: number
   data_vencimento: string
   status: Status

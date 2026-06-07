@@ -66,6 +66,30 @@ export default function DashboardPage() {
     fetchContas()
   }
 
+  async function handleDuplicar(conta: ContaMensal) {
+    const proximoMes = mes === 12 ? 1 : mes + 1
+    const proximoAno = mes === 12 ? ano + 1 : ano
+    const diaVenc = new Date(conta.data_vencimento).getDate()
+    const maxDia = new Date(proximoAno, proximoMes, 0).getDate()
+    const novaData = `${proximoAno}-${String(proximoMes).padStart(2,'0')}-${String(Math.min(diaVenc, maxDia)).padStart(2,'0')}`
+
+    await fetch('/api/contas-mensais', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        descricao: conta.descricao,
+        responsavel_id: conta.responsavel_id,
+        responsaveis_texto: conta.responsaveis_texto || '',
+        valor: conta.valor,
+        data_vencimento: novaData,
+        mes_competencia: proximoMes,
+        ano_competencia: proximoAno,
+        conta_recorrente_id: conta.conta_recorrente_id,
+      }),
+    })
+    alert(`Conta duplicada para ${proximoMes}/${proximoAno}!`)
+  }
+
   const resumo: ResumoMensal = contas.reduce((acc, c) => {
     const status = computeStatus(c.data_vencimento, c.data_pagamento)
     acc.total += c.valor
@@ -135,9 +159,8 @@ export default function DashboardPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <th className="pl-4 pr-2 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-10"></th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Descrição</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Responsável</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Responsável(is)</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Valor</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Vencimento</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
@@ -153,6 +176,7 @@ export default function DashboardPage() {
                     onDesfazerPagamento={handleDesfazerPagamento}
                     onEditar={c => setContaEditando(c)}
                     onExcluir={handleExcluir}
+                    onDuplicar={handleDuplicar}
                   />
                 ))}
               </tbody>

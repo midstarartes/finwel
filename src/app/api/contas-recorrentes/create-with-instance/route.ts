@@ -7,12 +7,12 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { descricao, responsavel_id, valor, dia_vencimento, mes_atual, ano_atual, data_vencimento } = body
+  const { descricao, responsavel_id, responsaveis_texto, valor, dia_vencimento, mes_atual, ano_atual, data_vencimento } = body
 
   // 1. Create the recurring bill template
   const { data: recorrente, error: errRec } = await supabase
     .from('contas_recorrentes')
-    .insert({ descricao, responsavel_id, valor, dia_vencimento, ativo: true, user_id: user.id })
+    .insert({ descricao, responsavel_id, responsaveis_texto: responsaveis_texto || '', valor, dia_vencimento, ativo: true, user_id: user.id })
     .select()
     .single()
 
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       descricao,
       responsavel_id,
+      responsaveis_texto: responsaveis_texto || '',
       valor,
       data_vencimento,
       status: 'aberto',
