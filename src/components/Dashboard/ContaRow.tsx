@@ -11,7 +11,7 @@ interface ContaRowProps {
   onDesfazerPagamento: (contaId: string) => Promise<void>
   onEditar: (conta: ContaMensal) => void
   onExcluir: (contaId: string) => Promise<void>
-  onDuplicar: (conta: ContaMensal) => Promise<void>
+  onDuplicar: (conta: ContaMensal) => void
 }
 
 export default function ContaRow({ conta, onMarcarPago, onDesfazerPagamento, onEditar, onExcluir, onDuplicar }: ContaRowProps) {

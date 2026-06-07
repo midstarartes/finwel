@@ -82,6 +82,18 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const { searchParams } = new URL(request.url)
+  const deactivateRecorrente = searchParams.get('deactivate_recorrente') === 'true'
+
+  // Fetch the bill first to get conta_recorrente_id
+  const { data: conta } = await supabase
+    .from('contas_mensais')
+    .select('conta_recorrente_id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  // Delete this monthly instance
   const { error } = await supabase
     .from('contas_mensais')
     .delete()
@@ -89,5 +101,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     .eq('user_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // If it came from a recurring bill and caller wants to stop recurrence
+  if (deactivateRecorrente && conta?.conta_recorrente_id) {
+    await supabase
+      .from('contas_recorrentes')
+      .update({ ativo: false })
+      .eq('id', conta.conta_recorrente_id)
+      .eq('user_id', user.id)
+  }
+
   return NextResponse.json({ success: true })
 }

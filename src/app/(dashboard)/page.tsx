@@ -9,6 +9,7 @@ import ContaRow from '@/components/Dashboard/ContaRow'
 import PagamentoModal from '@/components/Dashboard/PagamentoModal'
 import NovaConta from '@/components/Dashboard/NovaConta'
 import EditarConta from '@/components/Dashboard/EditarConta'
+import DuplicarModal from '@/components/Dashboard/DuplicarModal'
 import { Plus, Download, RefreshCw } from 'lucide-react'
 import Button from '@/components/UI/Button'
 
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [contaSelecionada, setContaSelecionada] = useState<ContaMensal | null>(null)
   const [showNovaConta, setShowNovaConta] = useState(false)
   const [contaEditando, setContaEditando] = useState<ContaMensal | null>(null)
+  const [contaDuplicando, setContaDuplicando] = useState<ContaMensal | null>(null)
 
   const fetchContas = useCallback(async () => {
     setLoading(true)
@@ -62,32 +64,30 @@ export default function DashboardPage() {
 
   async function handleExcluir(contaId: string) {
     if (!confirm('Excluir esta conta do mês?')) return
-    await fetch(`/api/contas-mensais/${contaId}`, { method: 'DELETE' })
+    await fetch(`/api/contas-mensais/${contaId}?deactivate_recorrente=true`, { method: 'DELETE' })
     fetchContas()
   }
 
-  async function handleDuplicar(conta: ContaMensal) {
-    const proximoMes = mes === 12 ? 1 : mes + 1
-    const proximoAno = mes === 12 ? ano + 1 : ano
-    const diaVenc = new Date(conta.data_vencimento).getDate()
-    const maxDia = new Date(proximoAno, proximoMes, 0).getDate()
-    const novaData = `${proximoAno}-${String(proximoMes).padStart(2,'0')}-${String(Math.min(diaVenc, maxDia)).padStart(2,'0')}`
+  function handleDuplicar(conta: ContaMensal) {
+    setContaDuplicando(conta)
+  }
 
+  async function handleConfirmarDuplicar(contaId: string, novoValor: number, novaData: string) {
+    const [anoStr, mesStr] = novaData.split('-')
     await fetch('/api/contas-mensais', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        descricao: conta.descricao,
-        responsavel_id: conta.responsavel_id,
-        responsaveis_texto: conta.responsaveis_texto || '',
-        valor: conta.valor,
+        descricao: contaDuplicando!.descricao,
+        responsavel_id: contaDuplicando!.responsavel_id,
+        responsaveis_texto: contaDuplicando!.responsaveis_texto || '',
+        valor: novoValor,
         data_vencimento: novaData,
-        mes_competencia: proximoMes,
-        ano_competencia: proximoAno,
-        conta_recorrente_id: conta.conta_recorrente_id,
+        mes_competencia: parseInt(mesStr),
+        ano_competencia: parseInt(anoStr),
       }),
     })
-    alert(`Conta duplicada para ${proximoMes}/${proximoAno}!`)
+    fetchContas()
   }
 
   const resumo: ResumoMensal = contas.reduce((acc, c) => {
@@ -205,6 +205,13 @@ export default function DashboardPage() {
         open={!!contaEditando}
         onClose={() => setContaEditando(null)}
         onSuccess={fetchContas}
+      />
+
+      <DuplicarModal
+        conta={contaDuplicando}
+        open={!!contaDuplicando}
+        onClose={() => setContaDuplicando(null)}
+        onConfirm={handleConfirmarDuplicar}
       />
     </div>
   )
